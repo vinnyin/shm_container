@@ -32,6 +32,8 @@
 #include "gtestx/gtestx.h" 
 #include "shmc/shm_hash_map.h"
 
+namespace {
+
 constexpr const char* kShmKey = "0x10005";
 constexpr size_t kKeyNum = 300000;
 constexpr size_t kNodeSize = 32;
@@ -39,6 +41,8 @@ constexpr size_t kNodeNum = 2000000;
 
 using TestTypes = testing::Types<shmc::POSIX, shmc::SVIPC, shmc::SVIPC_HugeTLB,
                                  shmc::ANON, shmc::HEAP>;
+
+}  // namespace
 
 template <class Alloc>
 class ShmHashMapTest : public testing::Test {
@@ -147,7 +151,7 @@ TYPED_TEST(ShmHashMapTest, HealthCheck) {
   auto node = this->hash_table()->FindOrAlloc(1, &is_found);
   ASSERT_TRUE(node && !is_found);
   node->key = 1;
-  node->link_buf.head = 1;
+  node->link_buf.m.head = 1;
   ASSERT_TRUE(this->hash_map_.HealthCheck(&hstat, true));
   EXPECT_EQ(0UL, hstat.total_key_values);
   EXPECT_EQ(1UL, hstat.bad_key_values);
@@ -200,10 +204,15 @@ TYPED_PERF_TEST(ShmHashMapPerfTest, PerfRead_100B) {
   ASSERT_TRUE(this->hash_map_.Find(200000, &out)) << PERF_ABORT;
 }
 
+namespace {
+
 constexpr size_t kTestKeyMax = 100;
 
 using PerfTestCTypes = testing::Types<shmc::POSIX, shmc::SVIPC,
                                       shmc::SVIPC_HugeTLB, shmc::ANON>;
+
+}  // namespace
+
 template <class Alloc>
 class ShmHashMapPerfTestC : public ShmHashMapPerfTest<Alloc> {
  protected:
